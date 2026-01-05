@@ -1,0 +1,137 @@
+/**
+ * ChecklistItem Component
+ * 
+ * Single checklist item with:
+ * - Yes/No/NA toggle
+ * - Remarks field (shows when NO selected)
+ * - Photo capture button
+ */
+
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useCamera } from '@/hooks/useCamera';
+import { PhotoCapture } from '@/components/camera/PhotoCapture';
+import styles from './ChecklistItem.module.css';
+
+export function ChecklistItem({
+    item,
+    response,
+    onResponseChange,
+    onPhotoCapture,
+    photos = [],
+    subsectionTitle,
+}) {
+    const [showRemarks, setShowRemarks] = useState(false);
+    const [showCamera, setShowCamera] = useState(false);
+    const [localRemarks, setLocalRemarks] = useState(response?.remarks || '');
+
+    const slNo = item.sl_no || item.slNo;
+    const checkingCriteria = item.checking_criteria || item.checkingCriteria;
+    const photoRequired = item.photo_required || item.photoRequired;
+    const remarksRequiredIf = item.remarks_required_if || item.remarksRequiredIf;
+
+    // Show remarks if response requires it
+    useEffect(() => {
+        if (response?.response === remarksRequiredIf) {
+            setShowRemarks(true);
+        }
+    }, [response?.response, remarksRequiredIf]);
+
+    const handleResponseSelect = (value) => {
+        onResponseChange(slNo, value, localRemarks);
+        if (value === remarksRequiredIf) {
+            setShowRemarks(true);
+        }
+    };
+
+    const handleRemarksChange = (e) => {
+        const remarks = e.target.value;
+        setLocalRemarks(remarks);
+        onResponseChange(slNo, response?.response, remarks);
+    };
+
+    const handlePhotoCapture = (photo) => {
+        onPhotoCapture(slNo, photo);
+        setShowCamera(false);
+    };
+
+    const currentResponse = response?.response || null;
+
+    return (
+        <div className={styles.item}>
+            <div className={styles.header}>
+                <span className={styles.slNo}>{slNo}</span>
+                {subsectionTitle && (
+                    <span className={styles.subTitle}>{subsectionTitle}</span>
+                )}
+                <span className={styles.criteria}>{checkingCriteria}</span>
+            </div>
+
+            <div className={styles.controls}>
+                {/* Yes/No Toggle */}
+                <div className={styles.toggleGroup}>
+                    <button
+                        type="button"
+                        className={`${styles.toggle} ${currentResponse === 'YES' ? styles.active : ''} ${styles.yes}`}
+                        onClick={() => handleResponseSelect('YES')}
+                    >
+                        Yes
+                    </button>
+                    <button
+                        type="button"
+                        className={`${styles.toggle} ${currentResponse === 'NO' ? styles.active : ''} ${styles.no}`}
+                        onClick={() => handleResponseSelect('NO')}
+                    >
+                        No
+                    </button>
+                </div>
+
+                {/* Photo Button */}
+                <button
+                    type="button"
+                    className={`${styles.photoBtn} ${photos.length > 0 ? styles.hasPhotos : ''}`}
+                    onClick={() => setShowCamera(true)}
+                >
+                    📷 {photos.length > 0 && <span className={styles.photoCount}>{photos.length}</span>}
+                    {photoRequired && <span className={styles.required}>*</span>}
+                </button>
+            </div>
+
+            {/* Remarks Field */}
+            {showRemarks && (
+                <div className={styles.remarks}>
+                    <label className={styles.remarksLabel}>
+                        Remarks {remarksRequiredIf === currentResponse && <span className={styles.required}>*</span>}
+                    </label>
+                    <textarea
+                        className={styles.remarksInput}
+                        value={localRemarks}
+                        onChange={handleRemarksChange}
+                        placeholder="Enter remarks..."
+                        rows={2}
+                    />
+                </div>
+            )}
+
+            {/* Camera Modal */}
+            {showCamera && (
+                <PhotoCapture
+                    onCapture={handlePhotoCapture}
+                    onClose={() => setShowCamera(false)}
+                />
+            )}
+
+            {/* Photo Thumbnails */}
+            {photos.length > 0 && (
+                <div className={styles.thumbnails}>
+                    {photos.map((photo, idx) => (
+                        <div key={idx} className={styles.thumbnail}>
+                            <img src={URL.createObjectURL(photo.blob)} alt={`Photo ${idx + 1}`} />
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}

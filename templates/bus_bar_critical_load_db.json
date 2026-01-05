@@ -1,0 +1,67 @@
+{
+    "checklist_id": "bus_bar_critical_load_db",
+    "title": "Bus Bar & Critical Load DB",
+    "version": "1.0",
+    "sheet_format": {
+        "columns": [
+            "Sl_No",
+            "Checking_Criteria",
+            "Yes",
+            "No",
+            "Remarks"
+        ]
+    },
+    "sections": [
+        {
+            "section_id": "copper_bus_bar_details",
+            "section_title": "Copper Bus Bar Details",
+            "items": [
+                {
+                    "item_id": "2.1",
+                    "sl_no": "2.1",
+                    "checking_criteria": "Minimum space of 25mm maintained between phase to phase and phase to neutral",
+                    "response_type": "yes_no",
+                    "allowed_values": [
+                        "YES",
+                        "NO"
+                    ],
+                    "default": null,
+                    "remarks_required_if": "NO",
+                    "photo_required": true
+                },
+                {
+                    "item_id": "2.2",
+                    "sl_no": "2.2",
+                    "checking_criteria": "Bus bar joints are tight and free from overheating marks",
+                    "response_type": "yes_no",
+                    "allowed_values": [
+                        "YES",
+                        "NO"
+                    ],
+                    "default": null,
+                    "remarks_required_if": "NO",
+                    "photo_required": true
+                }
+            ]
+        },
+        {
+            "section_id": "support_and_fixing",
+            "section_title": "Support & Fixing",
+            "items": [
+                {
+                    "item_id": "3.1",
+                    "sl_no": "3.1",
+                    "checking_criteria": "Bus bars are properly supported and fixed",
+                    "response_type": "yes_no",
+                    "allowed_values": [
+                        "YES",
+                        "NO"
+                    ],
+                    "default": null,
+                    "remarks_required_if": "NO",
+                    "photo_required": false
+                }
+            ]
+        }
+    ]
+}

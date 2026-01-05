@@ -1,0 +1,159 @@
+.section {
+    background: #f8fafc;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 16px;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.chevron {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.chevron.expanded {
+    transform: rotate(0deg);
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progressText {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.progressBar {
+    width: 60px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.content {
+    padding: 16px;
+}
+
+/* Subsection Styles */
+.subsection {
+    margin-bottom: 20px;
+}
+
+.subsectionTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f59e0b;
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+}
+
+.items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Table Styles */
+.tableContainer {
+    margin-top: 20px;
+    background: #f0fdf4;
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 3px solid #22c55e;
+}
+
+.tableTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #166534;
+    margin: 0 0 12px;
+}
+
+.readingsTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.readingsTable th {
+    background: #1a365d;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.readingsTable td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.readingsTable .headerRow td {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.readingsTable .spacerRow td {
+    background: #f8fafc;
+    height: 8px;
+    padding: 4px;
+}
+
+.tableInput {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.tableInput:focus {
+    outline: none;
+    border-color: #22c55e;
+}
