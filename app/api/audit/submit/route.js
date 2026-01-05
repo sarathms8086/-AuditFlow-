@@ -55,9 +55,10 @@ export async function POST(request) {
             sectionTitles
         );
 
-        // Step 3: Upload photos
-        console.log(`[AUDIT:${auditId}] Uploading ${photos.length} photos...`);
+        // Step 3: Process photos - handle both new uploads and already-uploaded photos
+        console.log(`[AUDIT:${auditId}] Processing ${photos.length} photos...`);
         const uploadedPhotos = [];
+
         for (const photo of photos) {
             try {
                 let targetFolderId = folders.photosFolderId;
@@ -93,25 +94,50 @@ export async function POST(request) {
                     if (found) break;
                 }
 
-                const buffer = Buffer.from(photo.base64, 'base64');
-                const uploaded = await uploadPhoto(
-                    accessToken,
-                    targetFolderId,
-                    photo.filename,
-                    buffer,
-                    photo.mimeType || 'image/jpeg'
-                );
+                // Check if photo was already uploaded via background upload
+                if (photo.alreadyUploaded && photo.driveFileId) {
+                    console.log(`[AUDIT:${auditId}] Photo ${photo.filename} already in Drive (${photo.driveFileId}), moving to audit folder...`);
 
-                uploadedPhotos.push({
-                    itemId: photo.itemId,
-                    filename: photo.filename,
-                    fileId: uploaded.id,
-                    webViewLink: uploaded.webViewLink,
-                });
+                    // Move the existing file to the correct audit folder
+                    try {
+                        await moveFileToFolder(accessToken, photo.driveFileId, targetFolderId);
+                        console.log(`[AUDIT:${auditId}] Moved ${photo.filename} to audit folder`);
+                    } catch (moveErr) {
+                        console.warn(`[AUDIT:${auditId}] Could not move file, may already be in place:`, moveErr.message);
+                    }
+
+                    uploadedPhotos.push({
+                        itemId: photo.itemId,
+                        filename: photo.filename,
+                        fileId: photo.driveFileId,
+                        webViewLink: photo.driveLink || `https://drive.google.com/file/d/${photo.driveFileId}/view`,
+                    });
+                } else if (photo.base64) {
+                    // New photo - upload to Drive
+                    const buffer = Buffer.from(photo.base64, 'base64');
+                    const uploaded = await uploadPhoto(
+                        accessToken,
+                        targetFolderId,
+                        photo.filename,
+                        buffer,
+                        photo.mimeType || 'image/jpeg'
+                    );
+
+                    uploadedPhotos.push({
+                        itemId: photo.itemId,
+                        filename: photo.filename,
+                        fileId: uploaded.id,
+                        webViewLink: uploaded.webViewLink,
+                    });
+                } else {
+                    console.warn(`[AUDIT:${auditId}] Photo ${photo.filename} has no base64 and no driveFileId - skipping`);
+                }
             } catch (photoErr) {
-                console.error(`[AUDIT:${auditId}] Failed to upload photo:`, photoErr.message);
+                console.error(`[AUDIT:${auditId}] Failed to process photo:`, photoErr.message);
             }
         }
+
+        console.log(`[AUDIT:${auditId}] Successfully processed ${uploadedPhotos.length} of ${photos.length} photos`);
 
         // Step 4: Create Google Sheet (one sheet per section)
         console.log(`[AUDIT:${auditId}] Creating Google Sheet...`);
