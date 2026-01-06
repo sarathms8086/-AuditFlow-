@@ -125,11 +125,32 @@ export function ChecklistItem({
             {/* Photo Thumbnails */}
             {photos.length > 0 && (
                 <div className={styles.thumbnails}>
-                    {photos.map((photo, idx) => (
-                        <div key={idx} className={styles.thumbnail}>
-                            <img src={URL.createObjectURL(photo.blob)} alt={`Photo ${idx + 1}`} />
-                        </div>
-                    ))}
+                    {photos.map((photo, idx) => {
+                        // Determine the image source based on photo status
+                        let imageSrc = null;
+                        if (photo.blob) {
+                            // Photo has local blob - use it
+                            imageSrc = URL.createObjectURL(photo.blob);
+                        } else if (photo.driveLink) {
+                            // Photo uploaded to Drive - use Drive link
+                            imageSrc = photo.driveLink;
+                        } else if (photo.driveFileId) {
+                            // Has Drive file ID but no link - construct link
+                            imageSrc = `https://drive.google.com/thumbnail?id=${photo.driveFileId}&sz=w200`;
+                        }
+
+                        return (
+                            <div key={idx} className={styles.thumbnail}>
+                                {imageSrc ? (
+                                    <img src={imageSrc} alt={`Photo ${idx + 1}`} />
+                                ) : (
+                                    <div className={styles.uploadedPlaceholder}>
+                                        ☁️ Uploaded
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             )}
         </div>
