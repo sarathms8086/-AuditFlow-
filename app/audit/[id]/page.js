@@ -27,6 +27,7 @@ export default function AuditExecutionPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+    const [sectionFindings, setSectionFindings] = useState({}); // { sectionId: [finding1, finding2] }
 
     // Load audit data
     useEffect(() => {
@@ -42,6 +43,11 @@ export default function AuditExecutionPage() {
                 return;
             }
             setAudit(auditData);
+
+            // Load section findings if they exist
+            if (auditData.sectionFindings) {
+                setSectionFindings(auditData.sectionFindings);
+            }
 
             // Load photos
             const photoData = await getAuditPhotos(params.id);
@@ -77,6 +83,24 @@ export default function AuditExecutionPage() {
             setSaving(false);
         }
     }, [audit]);
+
+    // Handle section findings change
+    const handleFindingsChange = useCallback(async (sectionId, findings) => {
+        if (!audit) return;
+
+        const newFindings = {
+            ...sectionFindings,
+            [sectionId]: findings,
+        };
+        setSectionFindings(newFindings);
+
+        // Save to IndexedDB
+        try {
+            await updateAudit(audit.id, { sectionFindings: newFindings });
+        } catch (err) {
+            console.error('Failed to save findings:', err);
+        }
+    }, [audit, sectionFindings]);
 
     // Handle photo capture with background upload
     const handlePhotoCapture = useCallback(async (itemId, photo) => {
@@ -280,9 +304,11 @@ export default function AuditExecutionPage() {
                         section={currentSection}
                         responses={audit.responses}
                         photos={photos}
+                        findings={sectionFindings[currentSection.section_id || currentSection.sectionId] || []}
                         onResponseChange={handleResponseChange}
                         onPhotoCapture={handlePhotoCapture}
                         onPhotoDelete={handlePhotoDelete}
+                        onFindingsChange={handleFindingsChange}
                         onTableValueChange={(tableRowId, value) => {
                             handleResponseChange(tableRowId, null, null);
                             // Store table values in responses

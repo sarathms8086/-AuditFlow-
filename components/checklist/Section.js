@@ -1,7 +1,7 @@
 /**
  * Section Component
  * 
- * Renders section with subsections, items, and tables
+ * Renders section with subsections, items, tables, and additional findings
  * Supports both old (items) and new (subsections) structure
  */
 
@@ -15,14 +15,74 @@ export function Section({
     section,
     responses,
     photos,
+    findings = [],
     onResponseChange,
     onPhotoCapture,
     onPhotoDelete,
     onTableValueChange,
+    onFindingsChange,
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
+    const [newFinding, setNewFinding] = useState('');
+    const [editingIndex, setEditingIndex] = useState(null);
+    const [editingText, setEditingText] = useState('');
 
+    const sectionId = section.section_id || section.sectionId;
     const sectionTitle = section.section_title || section.sectionTitle;
+
+    // Handle adding a new finding
+    const handleAddFinding = () => {
+        if (!newFinding.trim()) return;
+        const updatedFindings = [...findings, newFinding.trim()];
+        onFindingsChange?.(sectionId, updatedFindings);
+        setNewFinding('');
+    };
+
+    // Handle deleting a finding
+    const handleDeleteFinding = (index) => {
+        const updatedFindings = findings.filter((_, i) => i !== index);
+        onFindingsChange?.(sectionId, updatedFindings);
+    };
+
+    // Handle starting to edit a finding
+    const handleStartEdit = (index) => {
+        setEditingIndex(index);
+        setEditingText(findings[index]);
+    };
+
+    // Handle saving edited finding
+    const handleSaveEdit = () => {
+        if (editingIndex === null) return;
+        if (!editingText.trim()) {
+            // If empty, delete the finding
+            handleDeleteFinding(editingIndex);
+        } else {
+            const updatedFindings = [...findings];
+            updatedFindings[editingIndex] = editingText.trim();
+            onFindingsChange?.(sectionId, updatedFindings);
+        }
+        setEditingIndex(null);
+        setEditingText('');
+    };
+
+    // Handle Enter key in input
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddFinding();
+        }
+    };
+
+    // Handle Enter key in edit input
+    const handleEditKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSaveEdit();
+        } else if (e.key === 'Escape') {
+            setEditingIndex(null);
+            setEditingText('');
+        }
+    };
 
     // Get all items - support both old (items) and new (subsections) structure
     const getAllItems = () => {
@@ -168,6 +228,89 @@ export function Section({
                             </table>
                         </div>
                     ))}
+
+                    {/* Additional Findings Section */}
+                    <div className={styles.findingsSection}>
+                        <h4 className={styles.findingsTitle}>
+                            📝 Additional Findings
+                        </h4>
+
+                        {/* List of existing findings */}
+                        {findings.length > 0 && (
+                            <div className={styles.findingsList}>
+                                {findings.map((finding, idx) => (
+                                    <div key={idx} className={styles.findingItem}>
+                                        <span className={styles.findingNumber}>{idx + 1}.</span>
+                                        {editingIndex === idx ? (
+                                            <>
+                                                <input
+                                                    type="text"
+                                                    className={styles.findingEditInput}
+                                                    value={editingText}
+                                                    onChange={(e) => setEditingText(e.target.value)}
+                                                    onKeyDown={handleEditKeyPress}
+                                                    autoFocus
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={styles.findingSaveBtn}
+                                                    onClick={handleSaveEdit}
+                                                >
+                                                    ✓
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <span
+                                                    className={styles.findingText}
+                                                    onClick={() => handleStartEdit(idx)}
+                                                    title="Click to edit"
+                                                >
+                                                    {finding}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    className={styles.findingEditBtn}
+                                                    onClick={() => handleStartEdit(idx)}
+                                                    title="Edit finding"
+                                                >
+                                                    ✎
+                                                </button>
+                                            </>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className={styles.findingDeleteBtn}
+                                            onClick={() => handleDeleteFinding(idx)}
+                                            title="Delete finding"
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Add new finding input */}
+                        <div className={styles.findingsInput}>
+                            <input
+                                type="text"
+                                className={styles.findingTextInput}
+                                placeholder="Enter additional finding..."
+                                value={newFinding}
+                                onChange={(e) => setNewFinding(e.target.value)}
+                                onKeyPress={handleKeyPress}
+                            />
+                            <button
+                                type="button"
+                                className={styles.addFindingBtn}
+                                onClick={handleAddFinding}
+                                disabled={!newFinding.trim()}
+                            >
+                                + Add
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

@@ -157,3 +157,165 @@
     outline: none;
     border-color: #22c55e;
 }
+
+/* Additional Findings Section */
+.findingsSection {
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border-left: 4px solid #f59e0b;
+}
+
+.findingsTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.findingsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.findingItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+}
+
+.findingNumber {
+    font-weight: 700;
+    color: #92400e;
+    min-width: 24px;
+}
+
+.findingDeleteBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #ef4444;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingDeleteBtn:hover {
+    background: #dc2626;
+}
+
+.findingText {
+    flex: 1;
+    font-size: 14px;
+    color: #1e293b;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.findingText:hover {
+    text-decoration: underline;
+    color: #f59e0b;
+}
+
+.findingEditInput {
+    flex: 1;
+    padding: 6px 10px;
+    border: 2px solid #f59e0b;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.findingEditBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingEditBtn:hover {
+    background: #2563eb;
+}
+
+.findingSaveBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #22c55e;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingSaveBtn:hover {
+    background: #16a34a;
+}
+
+.findingsInput {
+    display: flex;
+    gap: 8px;
+}
+
+.findingTextInput {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #fcd34d;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+}
+
+.findingTextInput:focus {
+    outline: none;
+    border-color: #f59e0b;
+}
+
+.addFindingBtn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.addFindingBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.addFindingBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}

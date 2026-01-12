@@ -173,22 +173,41 @@ export async function POST(request) {
 
         // Step 5: Create Google Slides with photos
         console.log(`[AUDIT:${auditId}] Creating Google Slides with ${uploadedPhotos.length} photos...`);
+        console.log(`[AUDIT:${auditId}] auditData.sectionFindings:`, JSON.stringify(auditData.sectionFindings || {}));
+
         const sectionsForSlides = checklist.sections.map(section => ({
+            section_id: section.section_id || section.sectionId,
+            sectionId: section.section_id || section.sectionId,
             sectionTitle: section.section_title || section.sectionTitle,
-            items: (section.items || []).map(item => ({
-                slNo: item.sl_no || item.slNo,
-                checkingCriteria: item.checking_criteria || item.checkingCriteria,
-                response: item.response,
-                remarks: item.remarks,
-            })),
+            section_title: section.section_title || section.sectionTitle,
+            items: (section.items || []).map(item => {
+                const itemId = item.sl_no || item.slNo || item.item_id;
+                const resp = responses[itemId] || {};
+                return {
+                    slNo: itemId,
+                    sl_no: itemId,
+                    item_id: itemId,
+                    checkingCriteria: item.checking_criteria || item.checkingCriteria,
+                    response: item.response || resp.response,
+                    remarks: item.remarks || resp.remarks,
+                };
+            }),
             subsections: (section.subsections || []).map(sub => ({
-                items: (sub.items || []).map(item => ({
-                    sl_no: item.sl_no || item.slNo,
-                    item_id: item.item_id || item.itemId,
-                    remarks: item.remarks,
-                })),
+                subsection_title: sub.subsection_title || sub.subsectionTitle,
+                items: (sub.items || []).map(item => {
+                    const itemId = item.sl_no || item.slNo || item.item_id;
+                    const resp = responses[itemId] || {};
+                    return {
+                        sl_no: itemId,
+                        slNo: itemId,
+                        item_id: itemId,
+                        remarks: item.remarks || resp.remarks,
+                    };
+                }),
             })),
         }));
+
+        console.log(`[AUDIT:${auditId}] sectionsForSlides count: ${sectionsForSlides.length}`);
 
         const reportTitle = `${auditData.siteName}_Report_${new Date().toISOString().split('T')[0]}`;
         const presentation = await createAuditPresentation(accessToken, reportTitle, auditData, sectionsForSlides, uploadedPhotos);
