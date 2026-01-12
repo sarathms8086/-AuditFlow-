@@ -70,7 +70,7 @@ export function useCamera() {
                     resolve({ blob, filename });
                 },
                 'image/jpeg',
-                0.85 // Quality
+                0.98 // High quality - near lossless
             );
         });
     }, []);

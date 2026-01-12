@@ -12,7 +12,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { Section } from '@/components/checklist/Section';
 import { Button } from '@/components/ui/Button';
 import { useOffline } from '@/hooks/useOffline';
-import { getAudit, updateAudit, savePhoto, getAuditPhotos, blobToBase64 } from '@/lib/db';
+import { getAudit, updateAudit, savePhoto, getAuditPhotos, blobToBase64, deletePhoto } from '@/lib/db';
 import { queuePhotoUpload } from '@/lib/backgroundUpload';
 import { UploadBadge } from '@/components/ui/UploadBadge';
 import styles from './page.module.css';
@@ -104,6 +104,20 @@ export default function AuditExecutionPage() {
             alert('Failed to save photo');
         }
     }, [audit]);
+
+    // Handle photo deletion
+    const handlePhotoDelete = useCallback(async (photoId) => {
+        if (!photoId) return;
+
+        try {
+            await deletePhoto(photoId);
+            setPhotos((prev) => prev.filter(p => p.id !== photoId));
+            console.log('[PHOTO] Deleted photo:', photoId);
+        } catch (err) {
+            console.error('Failed to delete photo:', err);
+            alert('Failed to delete photo');
+        }
+    }, []);
 
     // Calculate progress for current section
     const calculateSectionProgress = (section) => {
@@ -268,6 +282,7 @@ export default function AuditExecutionPage() {
                         photos={photos}
                         onResponseChange={handleResponseChange}
                         onPhotoCapture={handlePhotoCapture}
+                        onPhotoDelete={handlePhotoDelete}
                         onTableValueChange={(tableRowId, value) => {
                             handleResponseChange(tableRowId, null, null);
                             // Store table values in responses

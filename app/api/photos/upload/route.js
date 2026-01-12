@@ -117,7 +117,16 @@ export async function POST(request) {
             fields: 'id, name, webViewLink, webContentLink',
         });
 
-        console.log(`[PHOTO] Uploaded ${filename} to Drive: ${file.data.id}`);
+        // Set public permission so Google Slides can access the image
+        await drive.permissions.create({
+            fileId: file.data.id,
+            requestBody: {
+                role: 'reader',
+                type: 'anyone',
+            },
+        });
+
+        console.log(`[PHOTO] Uploaded ${filename} to Drive: ${file.data.id} (public)`);
 
         return NextResponse.json({
             success: true,

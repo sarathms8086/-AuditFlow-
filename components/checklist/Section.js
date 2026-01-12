@@ -17,6 +17,7 @@ export function Section({
     photos,
     onResponseChange,
     onPhotoCapture,
+    onPhotoDelete,
     onTableValueChange,
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -97,6 +98,7 @@ export function Section({
                                             photos={photos.filter(p => p.itemId === itemId)}
                                             onResponseChange={onResponseChange}
                                             onPhotoCapture={onPhotoCapture}
+                                            onPhotoDelete={onPhotoDelete}
                                             subsectionTitle={subsection.subsection_title || subsection.subsectionTitle}
                                         />
                                     );
@@ -116,6 +118,7 @@ export function Section({
                                 photos={photos.filter(p => p.itemId === itemId)}
                                 onResponseChange={onResponseChange}
                                 onPhotoCapture={onPhotoCapture}
+                                onPhotoDelete={onPhotoDelete}
                             />
                         );
                     })}

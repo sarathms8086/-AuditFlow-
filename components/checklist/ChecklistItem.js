@@ -4,7 +4,8 @@
  * Single checklist item with:
  * - Yes/No/NA toggle
  * - Remarks field (shows when NO selected)
- * - Photo capture button
+ * - Photo capture button (up to 3 photos)
+ * - Delete photo functionality
  */
 
 'use client';
@@ -14,11 +15,14 @@ import { useCamera } from '@/hooks/useCamera';
 import { PhotoCapture } from '@/components/camera/PhotoCapture';
 import styles from './ChecklistItem.module.css';
 
+const MAX_PHOTOS = 3;
+
 export function ChecklistItem({
     item,
     response,
     onResponseChange,
     onPhotoCapture,
+    onPhotoDelete,
     photos = [],
     subsectionTitle,
 }) {
@@ -87,15 +91,20 @@ export function ChecklistItem({
                     </button>
                 </div>
 
-                {/* Photo Button */}
-                <button
-                    type="button"
-                    className={`${styles.photoBtn} ${photos.length > 0 ? styles.hasPhotos : ''}`}
-                    onClick={() => setShowCamera(true)}
-                >
-                    📷 {photos.length > 0 && <span className={styles.photoCount}>{photos.length}</span>}
-                    {photoRequired && <span className={styles.required}>*</span>}
-                </button>
+                {/* Photo Button - only show if less than MAX_PHOTOS */}
+                {photos.length < MAX_PHOTOS && (
+                    <button
+                        type="button"
+                        className={`${styles.photoBtn} ${photos.length > 0 ? styles.hasPhotos : ''}`}
+                        onClick={() => setShowCamera(true)}
+                    >
+                        📷 {photos.length > 0 ? `${photos.length}/${MAX_PHOTOS}` : 'Add'}
+                        {photoRequired && <span className={styles.required}>*</span>}
+                    </button>
+                )}
+                {photos.length >= MAX_PHOTOS && (
+                    <span className={styles.photoMaxReached}>📷 {photos.length}/{MAX_PHOTOS}</span>
+                )}
             </div>
 
             {/* Remarks Field */}
@@ -122,7 +131,7 @@ export function ChecklistItem({
                 />
             )}
 
-            {/* Photo Thumbnails */}
+            {/* Photo Thumbnails with Delete Button */}
             {photos.length > 0 && (
                 <div className={styles.thumbnails}>
                     {photos.map((photo, idx) => {
@@ -140,14 +149,23 @@ export function ChecklistItem({
                         }
 
                         return (
-                            <div key={idx} className={styles.thumbnail}>
+                            <div key={photo.id || idx} className={styles.thumbnail}>
                                 {imageSrc ? (
                                     <img src={imageSrc} alt={`Photo ${idx + 1}`} />
                                 ) : (
                                     <div className={styles.uploadedPlaceholder}>
-                                        ☁️ Uploaded
+                                        ☁️
                                     </div>
                                 )}
+                                {/* Delete button */}
+                                <button
+                                    type="button"
+                                    className={styles.deleteBtn}
+                                    onClick={() => onPhotoDelete && onPhotoDelete(photo.id)}
+                                    title="Delete photo"
+                                >
+                                    ×
+                                </button>
                             </div>
                         );
                     })}

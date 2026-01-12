@@ -160,6 +160,7 @@
 }
 
 .thumbnail {
+    position: relative;
     width: 60px;
     height: 60px;
     border-radius: 8px;
@@ -181,6 +182,39 @@
     justify-content: center;
     background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
     color: #0369a1;
-    font-size: 12px;
+    font-size: 16px;
+}
+
+.deleteBtn {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding: 0;
+}
+
+.deleteBtn:hover {
+    background: #dc2626;
+}
+
+.photoMaxReached {
+    padding: 10px 16px;
+    border: 2px solid #22c55e;
+    background: #f0fdf4;
+    border-radius: 8px;
+    font-size: 14px;
     font-weight: 600;
+    color: #16a34a;
 }
