@@ -15,11 +15,14 @@ export function Section({
     section,
     responses,
     photos,
+    tablePhotos = {},
     findings = [],
     onResponseChange,
     onPhotoCapture,
     onPhotoDelete,
     onTableValueChange,
+    onTablePhotoCapture,
+    onTablePhotoDelete,
     onFindingsChange,
 }) {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -197,33 +200,79 @@ export function Section({
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {table.rows?.map((row, rowIdx) => (
-                                        row.isHeader ? (
-                                            <tr key={rowIdx} className={styles.headerRow}>
-                                                <td colSpan={2}>{row.label}</td>
-                                            </tr>
-                                        ) : row.isSpacer ? (
-                                            <tr key={rowIdx} className={styles.spacerRow}>
-                                                <td colSpan={2}></td>
-                                            </tr>
-                                        ) : (
-                                            <tr key={rowIdx}>
-                                                <td>{row.label}</td>
-                                                <td>
-                                                    <input
-                                                        type="text"
-                                                        className={styles.tableInput}
-                                                        placeholder="Enter value"
-                                                        value={responses[`table_${table.table_id}_${rowIdx}`]?.value || ''}
-                                                        onChange={(e) => onTableValueChange?.(
-                                                            `table_${table.table_id}_${rowIdx}`,
-                                                            e.target.value
-                                                        )}
-                                                    />
-                                                </td>
-                                            </tr>
-                                        )
-                                    ))}
+                                    {table.rows?.map((row, rowIdx) => {
+                                        if (row.isHeader) {
+                                            const tableHeaderId = `table_${table.table_id}_header_${rowIdx}`;
+                                            const headerPhotos = tablePhotos[tableHeaderId] || [];
+                                            const MAX_TABLE_PHOTOS = 4;
+
+                                            return (
+                                                <tr key={rowIdx} className={styles.headerRow}>
+                                                    <td colSpan={2}>
+                                                        <div className={styles.tableHeaderContent}>
+                                                            <span className={styles.tableHeaderLabel}>{row.label}</span>
+                                                            <div className={styles.tableHeaderPhotos}>
+                                                                {/* Photo thumbnails */}
+                                                                {headerPhotos.map((photo, pIdx) => (
+                                                                    <div key={pIdx} className={styles.tablePhotoThumb}>
+                                                                        <img src={photo.thumbnail || photo.url} alt="" />
+                                                                        <button
+                                                                            type="button"
+                                                                            className={styles.tablePhotoDelete}
+                                                                            onClick={() => onTablePhotoDelete?.(tableHeaderId, pIdx)}
+                                                                        >×</button>
+                                                                    </div>
+                                                                ))}
+                                                                {/* Camera button */}
+                                                                {headerPhotos.length < MAX_TABLE_PHOTOS && (
+                                                                    <label className={styles.tablePhotoBtn}>
+                                                                        📷 {headerPhotos.length}/{MAX_TABLE_PHOTOS}
+                                                                        <input
+                                                                            type="file"
+                                                                            accept="image/*"
+                                                                            capture="environment"
+                                                                            style={{ display: 'none' }}
+                                                                            onChange={(e) => {
+                                                                                const file = e.target.files?.[0];
+                                                                                if (file) {
+                                                                                    onTablePhotoCapture?.(tableHeaderId, row.label, file);
+                                                                                    e.target.value = '';
+                                                                                }
+                                                                            }}
+                                                                        />
+                                                                    </label>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        } else if (row.isSpacer) {
+                                            return (
+                                                <tr key={rowIdx} className={styles.spacerRow}>
+                                                    <td colSpan={2}></td>
+                                                </tr>
+                                            );
+                                        } else {
+                                            return (
+                                                <tr key={rowIdx}>
+                                                    <td>{row.label}</td>
+                                                    <td>
+                                                        <input
+                                                            type="text"
+                                                            className={styles.tableInput}
+                                                            placeholder="Enter value"
+                                                            value={responses[`table_${table.table_id}_${rowIdx}`]?.value || ''}
+                                                            onChange={(e) => onTableValueChange?.(
+                                                                `table_${table.table_id}_${rowIdx}`,
+                                                                e.target.value
+                                                            )}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+                                    })}
                                 </tbody>
                             </table>
                         </div>

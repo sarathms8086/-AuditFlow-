@@ -319,3 +319,75 @@
 .addFindingBtn:hover:not(:disabled) {
     background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
 }
+
+/* Table Header Photo Styles */
+.tableHeaderContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.tableHeaderLabel {
+    font-weight: 600;
+    color: #2d5a73;
+}
+
+.tableHeaderPhotos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tablePhotoThumb {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid #0099a0;
+}
+
+.tablePhotoThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tablePhotoDelete {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.tablePhotoBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #0099a0 0%, #007a80 100%);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.tablePhotoBtn:hover {
+    background: linear-gradient(135deg, #007a80 0%, #005c60 100%);
+}

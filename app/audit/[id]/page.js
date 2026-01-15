@@ -28,6 +28,7 @@ export default function AuditExecutionPage() {
     const [saving, setSaving] = useState(false);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [sectionFindings, setSectionFindings] = useState({}); // { sectionId: [finding1, finding2] }
+    const [tablePhotos, setTablePhotos] = useState({}); // { tableHeaderId: [{url, thumbnail}, ...] }
 
     // Load audit data
     useEffect(() => {
@@ -47,6 +48,11 @@ export default function AuditExecutionPage() {
             // Load section findings if they exist
             if (auditData.sectionFindings) {
                 setSectionFindings(auditData.sectionFindings);
+            }
+
+            // Load table photos if they exist
+            if (auditData.tablePhotos) {
+                setTablePhotos(auditData.tablePhotos);
             }
 
             // Load photos
@@ -142,6 +148,114 @@ export default function AuditExecutionPage() {
             alert('Failed to delete photo');
         }
     }, []);
+
+    // Handle table photo capture - saves to IndexedDB and queues upload like regular photos
+    const handleTablePhotoCapture = useCallback(async (tableHeaderId, headerLabel, file) => {
+        if (!audit) return;
+
+        try {
+            // Convert File to Blob if needed
+            const blob = file instanceof Blob ? file : new Blob([file], { type: file.type });
+
+            // Save to IndexedDB photos table (using tableHeaderId as itemId)
+            const saved = await savePhoto(audit.id, tableHeaderId, blob, file.name || `table_photo_${Date.now()}.jpg`);
+            setPhotos((prev) => [...prev, saved]);
+
+            // Create thumbnail for display in tablePhotos
+            const thumbnail = await createThumbnail(file);
+
+            // Also track in tablePhotos state for UI display
+            const newTablePhotos = { ...tablePhotos };
+            if (!newTablePhotos[tableHeaderId]) {
+                newTablePhotos[tableHeaderId] = [];
+            }
+            newTablePhotos[tableHeaderId].push({
+                id: saved.id, // Link to photos DB record
+                url: saved.url,
+                thumbnail,
+                headerLabel,
+                filename: file.name,
+                createdAt: new Date().toISOString(),
+            });
+            setTablePhotos(newTablePhotos);
+            await updateAudit(audit.id, { tablePhotos: newTablePhotos });
+
+            // Queue for background upload to Google Drive
+            if (navigator.onLine) {
+                const base64 = await blobToBase64(blob);
+                queuePhotoUpload({
+                    ...saved,
+                    base64,
+                }, audit.id).catch(err => {
+                    console.warn('Background upload queued, will retry:', err.message);
+                });
+            }
+
+            console.log('[TABLE PHOTO] Added and queued:', tableHeaderId);
+        } catch (err) {
+            console.error('Failed to save table photo:', err);
+            alert('Failed to save photo');
+        }
+    }, [audit, tablePhotos]);
+
+    // Handle table photo deletion
+    const handleTablePhotoDelete = useCallback(async (tableHeaderId, photoIndex) => {
+        if (!audit) return;
+
+        try {
+            const newTablePhotos = { ...tablePhotos };
+            if (newTablePhotos[tableHeaderId]) {
+                const photo = newTablePhotos[tableHeaderId][photoIndex];
+
+                // Delete from photos IndexedDB if we have the photo id
+                if (photo?.id) {
+                    await deletePhoto(photo.id);
+                    setPhotos((prev) => prev.filter(p => p.id !== photo.id));
+                }
+
+                // Revoke object URL
+                if (photo?.url) URL.revokeObjectURL(photo.url);
+
+                newTablePhotos[tableHeaderId].splice(photoIndex, 1);
+
+                // Remove empty arrays
+                if (newTablePhotos[tableHeaderId].length === 0) {
+                    delete newTablePhotos[tableHeaderId];
+                }
+            }
+
+            setTablePhotos(newTablePhotos);
+
+            // Save to IndexedDB
+            await updateAudit(audit.id, { tablePhotos: newTablePhotos });
+            console.log('[TABLE PHOTO] Deleted photo from:', tableHeaderId);
+        } catch (err) {
+            console.error('Failed to delete table photo:', err);
+            alert('Failed to delete photo');
+        }
+    }, [audit, tablePhotos]);
+
+    // Helper function to create thumbnail
+    const createThumbnail = async (file) => {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_SIZE = 100;
+                    const scale = Math.min(MAX_SIZE / img.width, MAX_SIZE / img.height);
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    resolve(canvas.toDataURL('image/jpeg', 0.7));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    };
 
     // Calculate progress for current section
     const calculateSectionProgress = (section) => {
@@ -305,10 +419,13 @@ export default function AuditExecutionPage() {
                         responses={audit.responses}
                         photos={photos}
                         findings={sectionFindings[currentSection.section_id || currentSection.sectionId] || []}
+                        tablePhotos={tablePhotos}
                         onResponseChange={handleResponseChange}
                         onPhotoCapture={handlePhotoCapture}
                         onPhotoDelete={handlePhotoDelete}
                         onFindingsChange={handleFindingsChange}
+                        onTablePhotoCapture={handleTablePhotoCapture}
+                        onTablePhotoDelete={handleTablePhotoDelete}
                         onTableValueChange={(tableRowId, value) => {
                             handleResponseChange(tableRowId, null, null);
                             // Store table values in responses
