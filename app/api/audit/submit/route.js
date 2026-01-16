@@ -27,6 +27,11 @@ export async function POST(request) {
         // Parse request body
         const { auditData, checklist, photos = [], responses: req_responses = {} } = await request.json();
 
+        // EARLY DEBUG: Log photos array immediately
+        console.log(`[SUBMIT] Received ${photos.length} photos, itemIds:`, photos.map(p => p.itemId));
+        const tablePhotoCount = photos.filter(p => p.itemId?.startsWith('table_')).length;
+        console.log(`[SUBMIT] Table photos detected: ${tablePhotoCount}`);
+
         // Validate required fields
         if (!auditData || !auditData.siteName) {
             return NextResponse.json({ error: 'Missing required audit data (siteName)' }, { status: 400 });
@@ -55,6 +60,56 @@ export async function POST(request) {
             sectionTitles
         );
 
+        // Step 2b: Create table photo folders by detecting table photos from photos array
+        // Table photos have itemId like "table_table_1767520826585_header_0"
+        const tableFolders = {};
+        const tableNames = new Set();
+
+        console.log(`[AUDIT:${auditId}] Detecting table photos from ${photos.length} total photos...`);
+
+        // Find unique table names from photos
+        for (const photo of photos) {
+            const isTablePhoto = photo.itemId?.includes('_header_') && photo.itemId?.startsWith('table_');
+
+            if (isTablePhoto) {
+                // Extract table_id from itemId: "table_[TABLE_ID]_header_N"
+                // TABLE_ID can be like "table_1767520826585" so result is "table_table_1767520826585_header_0"
+                // We need to extract everything before "_header_"
+                const headerIndex = photo.itemId.indexOf('_header_');
+                const tableIdPart = photo.itemId.substring(6, headerIndex); // Skip "table_" prefix
+                console.log(`[AUDIT:${auditId}] Table photo ${photo.filename}: tableIdPart="${tableIdPart}"`);
+
+                // Find the table by matching table_id
+                for (const section of checklist.sections) {
+                    const tables = section.tables || [];
+                    for (const table of tables) {
+                        // table.table_id could be "table_1767520826585"
+                        if (table.table_id === tableIdPart || `table_${table.table_id}` === tableIdPart || table.table_id === `table_${tableIdPart}`) {
+                            const tableName = table.columns?.[1] || 'Electrical Readings';
+                            const folderName = `${tableName} READINGS`;
+                            tableNames.add(folderName);
+                            console.log(`[AUDIT:${auditId}] Matched table ${table.table_id} -> folder: ${folderName}`);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        console.log(`[AUDIT:${auditId}] Table folders to create:`, Array.from(tableNames));
+
+        // Create folders for each table
+        for (const tableName of tableNames) {
+            try {
+                const folderId = await createSectionPhotoFolders(accessToken, folders.photosFolderId, [tableName]);
+                tableFolders[tableName] = folderId[tableName];
+                console.log(`[AUDIT:${auditId}] Created table folder: ${tableName}`);
+            } catch (err) {
+                console.warn(`[AUDIT:${auditId}] Could not create table folder ${tableName}:`, err.message);
+            }
+        }
+
+
         // Step 3: Process photos - handle both new uploads and already-uploaded photos
         console.log(`[AUDIT:${auditId}] Processing ${photos.length} photos...`);
         const uploadedPhotos = [];
@@ -63,35 +118,55 @@ export async function POST(request) {
             try {
                 let targetFolderId = folders.photosFolderId;
 
-                // Find which section the photo belongs to
-                for (const section of checklist.sections) {
-                    let found = false;
+                // Check if this is a table photo (itemId starts with "table_")
+                if (photo.itemId?.startsWith('table_') && photo.itemId?.includes('_header_')) {
+                    // Extract table_id from itemId
+                    const headerIndex = photo.itemId.indexOf('_header_');
+                    const tableIdPart = photo.itemId.substring(6, headerIndex); // Skip "table_" prefix
 
-                    // Check subsections structure
-                    if (section.subsections && section.subsections.length > 0) {
-                        for (const sub of section.subsections) {
-                            if ((sub.items || []).some(item =>
-                                (item.sl_no === photo.itemId || item.slNo === photo.itemId || item.item_id === photo.itemId)
-                            )) {
-                                const sectionTitle = section.section_title || section.sectionTitle;
-                                targetFolderId = sectionFolders[sectionTitle] || folders.photosFolderId;
-                                found = true;
+                    // Find the table by matching table_id
+                    for (const section of checklist.sections) {
+                        const tables = section.tables || [];
+                        for (const table of tables) {
+                            if (table.table_id === tableIdPart || `table_${table.table_id}` === tableIdPart || table.table_id === `table_${tableIdPart}`) {
+                                const tableName = table.columns?.[1] || 'Electrical Readings';
+                                const folderName = `${tableName} READINGS`;
+                                targetFolderId = tableFolders[folderName] || folders.photosFolderId;
                                 break;
                             }
                         }
                     }
+                } else {
+                    // Regular checklist photo - find which section it belongs to
+                    for (const section of checklist.sections) {
+                        let found = false;
 
-                    // Check old items structure
-                    if (!found && section.items) {
-                        if (section.items.some(item =>
-                            (item.item_id === photo.itemId || item.itemId === photo.itemId || item.sl_no === photo.itemId || item.slNo === photo.itemId)
-                        )) {
-                            const sectionTitle = section.section_title || section.sectionTitle;
-                            targetFolderId = sectionFolders[sectionTitle] || folders.photosFolderId;
+                        // Check subsections structure
+                        if (section.subsections && section.subsections.length > 0) {
+                            for (const sub of section.subsections) {
+                                if ((sub.items || []).some(item =>
+                                    (item.sl_no === photo.itemId || item.slNo === photo.itemId || item.item_id === photo.itemId)
+                                )) {
+                                    const sectionTitle = section.section_title || section.sectionTitle;
+                                    targetFolderId = sectionFolders[sectionTitle] || folders.photosFolderId;
+                                    found = true;
+                                    break;
+                                }
+                            }
                         }
-                    }
 
-                    if (found) break;
+                        // Check old items structure
+                        if (!found && section.items) {
+                            if (section.items.some(item =>
+                                (item.item_id === photo.itemId || item.itemId === photo.itemId || item.sl_no === photo.itemId || item.slNo === photo.itemId)
+                            )) {
+                                const sectionTitle = section.section_title || section.sectionTitle;
+                                targetFolderId = sectionFolders[sectionTitle] || folders.photosFolderId;
+                            }
+                        }
+
+                        if (found) break;
+                    }
                 }
 
                 // Check if photo was already uploaded via background upload

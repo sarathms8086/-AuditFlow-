@@ -11,8 +11,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useCamera } from '@/hooks/useCamera';
-import { PhotoCapture } from '@/components/camera/PhotoCapture';
 import styles from './ChecklistItem.module.css';
 
 const MAX_PHOTOS = 3;
@@ -27,7 +25,6 @@ export function ChecklistItem({
     subsectionTitle,
 }) {
     const [showRemarks, setShowRemarks] = useState(false);
-    const [showCamera, setShowCamera] = useState(false);
     const [localRemarks, setLocalRemarks] = useState(response?.remarks || '');
 
     const slNo = item.sl_no || item.slNo;
@@ -55,9 +52,18 @@ export function ChecklistItem({
         onResponseChange(slNo, response?.response, remarks);
     };
 
-    const handlePhotoCapture = (photo) => {
-        onPhotoCapture(slNo, photo);
-        setShowCamera(false);
+    // Handle file input capture (native camera)
+    const handleFileCapture = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            // Create blob and filename like the original PhotoCapture did
+            const photo = {
+                blob: file,
+                filename: `photo_${Date.now()}.jpg`,
+            };
+            onPhotoCapture(slNo, photo);
+            e.target.value = ''; // Reset input for next capture
+        }
     };
 
     const currentResponse = response?.response || null;
@@ -91,16 +97,19 @@ export function ChecklistItem({
                     </button>
                 </div>
 
-                {/* Photo Button - only show if less than MAX_PHOTOS */}
+                {/* Photo Button - native file input for full quality */}
                 {photos.length < MAX_PHOTOS && (
-                    <button
-                        type="button"
-                        className={`${styles.photoBtn} ${photos.length > 0 ? styles.hasPhotos : ''}`}
-                        onClick={() => setShowCamera(true)}
-                    >
+                    <label className={`${styles.photoBtn} ${photos.length > 0 ? styles.hasPhotos : ''}`}>
                         📷 {photos.length > 0 ? `${photos.length}/${MAX_PHOTOS}` : 'Add'}
                         {photoRequired && <span className={styles.required}>*</span>}
-                    </button>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            style={{ display: 'none' }}
+                            onChange={handleFileCapture}
+                        />
+                    </label>
                 )}
                 {photos.length >= MAX_PHOTOS && (
                     <span className={styles.photoMaxReached}>📷 {photos.length}/{MAX_PHOTOS}</span>
@@ -123,13 +132,7 @@ export function ChecklistItem({
                 </div>
             )}
 
-            {/* Camera Modal */}
-            {showCamera && (
-                <PhotoCapture
-                    onCapture={handlePhotoCapture}
-                    onClose={() => setShowCamera(false)}
-                />
-            )}
+
 
             {/* Photo Thumbnails with Delete Button */}
             {photos.length > 0 && (
