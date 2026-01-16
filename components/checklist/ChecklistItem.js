@@ -71,10 +71,12 @@ export function ChecklistItem({
     return (
         <div className={styles.item}>
             <div className={styles.header}>
-                <span className={styles.slNo}>{slNo}</span>
-                {subsectionTitle && (
-                    <span className={styles.subTitle}>{subsectionTitle}</span>
-                )}
+                <div className={styles.headerTop}>
+                    <span className={styles.slNo}>{slNo}</span>
+                    {subsectionTitle && (
+                        <span className={styles.subTitle}>{subsectionTitle}</span>
+                    )}
+                </div>
                 <span className={styles.criteria}>{checkingCriteria}</span>
             </div>
 

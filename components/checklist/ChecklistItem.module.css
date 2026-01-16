@@ -9,8 +9,16 @@
 
 .header {
     display: flex;
-    gap: 12px;
+    flex-direction: column;
+    gap: 8px;
     margin-bottom: 12px;
+}
+
+.headerTop {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
 .slNo {
@@ -29,15 +37,40 @@
     padding: 4px 10px;
     border-radius: 6px;
     font-weight: 600;
-    font-size: 12px;
-    white-space: nowrap;
+    font-size: 11px;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
 }
 
 .criteria {
-    flex: 1;
     font-size: 15px;
     line-height: 1.4;
     color: #334155;
+    font-weight: 500;
+}
+
+/* Desktop: inline layout */
+@media (min-width: 768px) {
+    .header {
+        flex-direction: row;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .headerTop {
+        flex-wrap: nowrap;
+    }
+
+    .subTitle {
+        font-size: 12px;
+        white-space: nowrap;
+        flex: none;
+    }
+
+    .criteria {
+        flex: 1;
+    }
 }
 
 .controls {
