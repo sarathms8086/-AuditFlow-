@@ -7,13 +7,14 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Section } from '@/components/checklist/Section';
 import { Button } from '@/components/ui/Button';
 import { useOffline } from '@/hooks/useOffline';
 import { getAudit, updateAudit, savePhoto, getAuditPhotos, blobToBase64, deletePhoto } from '@/lib/db';
 import { queuePhotoUpload } from '@/lib/backgroundUpload';
+import { startAutoBackup, getLastBackupTime } from '@/lib/autoBackup';
 import { UploadBadge } from '@/components/ui/UploadBadge';
 import styles from './page.module.css';
 
@@ -29,6 +30,7 @@ export default function AuditExecutionPage() {
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [sectionFindings, setSectionFindings] = useState({}); // { sectionId: [finding1, finding2] }
     const [tablePhotos, setTablePhotos] = useState({}); // { tableHeaderId: [{url, thumbnail}, ...] }
+    const stopBackupRef = useRef(null); // Reference to stop auto-backup function
 
     // Load audit data
     useEffect(() => {
@@ -65,6 +67,35 @@ export default function AuditExecutionPage() {
             setLoading(false);
         }
     };
+
+    // Start auto-backup when audit loads
+    useEffect(() => {
+        if (!audit?.driveResources?.auditFolderId) return;
+
+        // Function to get latest audit data for backup
+        const getLatestData = () => ({
+            siteName: audit.siteName,
+            clientName: audit.clientName,
+            auditorName: audit.auditorName,
+            location: audit.location,
+            responses: audit.responses,
+            sectionFindings,
+            tablePhotos,
+            checklistId: audit.checklistId,
+            checklistTitle: audit.checklistTitle,
+        });
+
+        // Start auto-backup (every 2 minutes)
+        stopBackupRef.current = startAutoBackup(audit, getLatestData);
+        console.log('[AUDIT] Auto-backup started');
+
+        // Cleanup on unmount
+        return () => {
+            if (stopBackupRef.current) {
+                stopBackupRef.current();
+            }
+        };
+    }, [audit?.id, audit?.driveResources?.auditFolderId]);
 
     // Auto-save on response change
     const handleResponseChange = useCallback(async (itemId, response, remarks) => {
@@ -125,7 +156,7 @@ export default function AuditExecutionPage() {
                 queuePhotoUpload({
                     ...saved,
                     base64,
-                }, audit.id).catch(err => {
+                }, audit.id, audit.driveResources).catch(err => {
                     console.warn('Background upload queued, will retry:', err.message);
                 });
             }
@@ -186,7 +217,7 @@ export default function AuditExecutionPage() {
                 queuePhotoUpload({
                     ...saved,
                     base64,
-                }, audit.id).catch(err => {
+                }, audit.id, audit.driveResources).catch(err => {
                     console.warn('Background upload queued, will retry:', err.message);
                 });
             }

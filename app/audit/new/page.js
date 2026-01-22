@@ -57,9 +57,11 @@ export default function NewAuditPage() {
             // Get user info
             const authData = localStorage.getItem('auditflow_auth');
             let auditorName = 'Unknown';
+            let accessToken = null;
             if (authData) {
                 const parsed = JSON.parse(authData);
                 auditorName = parsed.user?.name || 'Unknown';
+                accessToken = parsed.accessToken;
             }
 
             // Find selected checklist
@@ -68,12 +70,47 @@ export default function NewAuditPage() {
                 throw new Error('Please select a checklist');
             }
 
-            // Create audit in IndexedDB
+            // Create audit in IndexedDB first (always works, even offline)
             const audit = await createAudit({
                 ...formData,
                 auditorName,
                 checklist: selectedChecklist,
             });
+
+            // Try to initialize Drive resources (folder, sheet, PPT) in background
+            // If this fails, audit still works - resources created at submit
+            if (accessToken && navigator.onLine) {
+                try {
+                    console.log('[AUDIT] Initializing Drive resources...');
+                    const initResponse = await fetch('/api/audit/init', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${accessToken}`,
+                        },
+                        body: JSON.stringify({
+                            auditId: audit.id,
+                            siteName: formData.siteName,
+                            location: formData.location,
+                            auditorName,
+                            checklistTitle: selectedChecklist.title,
+                            sections: selectedChecklist.sections,
+                        }),
+                    });
+
+                    if (initResponse.ok) {
+                        const { driveResources } = await initResponse.json();
+                        // Update audit with Drive resource IDs
+                        const { updateAudit } = await import('@/lib/db');
+                        await updateAudit(audit.id, { driveResources });
+                        console.log('[AUDIT] Drive resources initialized:', driveResources.auditFolderId);
+                    } else {
+                        console.warn('[AUDIT] Drive init failed, will create at submit');
+                    }
+                } catch (initErr) {
+                    console.warn('[AUDIT] Drive init error (will retry at submit):', initErr.message);
+                }
+            }
 
             // Navigate to audit execution
             router.push(`/audit/${audit.id}`);

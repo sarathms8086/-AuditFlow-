@@ -163,6 +163,7 @@ export function Section({
                                             onPhotoCapture={onPhotoCapture}
                                             onPhotoDelete={onPhotoDelete}
                                             subsectionTitle={subsection.subsection_title || subsection.subsectionTitle}
+                                            sectionTitle={sectionTitle}
                                         />
                                     );
                                 })}
@@ -182,6 +183,7 @@ export function Section({
                                 onResponseChange={onResponseChange}
                                 onPhotoCapture={onPhotoCapture}
                                 onPhotoDelete={onPhotoDelete}
+                                sectionTitle={sectionTitle}
                             />
                         );
                     })}

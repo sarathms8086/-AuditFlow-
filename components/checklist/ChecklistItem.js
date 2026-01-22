@@ -23,6 +23,7 @@ export function ChecklistItem({
     onPhotoDelete,
     photos = [],
     subsectionTitle,
+    sectionTitle = '', // Section name for photo filename
 }) {
     const [showRemarks, setShowRemarks] = useState(false);
     const [localRemarks, setLocalRemarks] = useState(response?.remarks || '');
@@ -56,10 +57,16 @@ export function ChecklistItem({
     const handleFileCapture = (e) => {
         const file = e.target.files?.[0];
         if (file) {
-            // Create blob and filename like the original PhotoCapture did
+            // Generate filename with section name for easy identification
+            // Format: "SectionName_PhotoNumber.jpg" e.g. "Critical DB_1.jpg"
+            const photoNumber = photos.length + 1;
+            const sectionPrefix = sectionTitle ? `${sectionTitle}_` : '';
+            const filename = `${sectionPrefix}${photoNumber}_${Date.now()}.jpg`;
+
             const photo = {
                 blob: file,
-                filename: `photo_${Date.now()}.jpg`,
+                filename,
+                sectionTitle, // Pass section info for folder targeting
             };
             onPhotoCapture(slNo, photo);
             e.target.value = ''; // Reset input for next capture

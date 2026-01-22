@@ -12,6 +12,22 @@ import { createAuditPresentation } from '@/lib/google/slides';
 
 export const maxDuration = 60; // Max 60 seconds for Pro plan, 10 for free
 
+/**
+ * Process items in parallel batches
+ * @param {Array} items - Items to process
+ * @param {Function} processor - Async function to process each item
+ * @param {number} batchSize - Number of items to process concurrently
+ */
+async function processBatches(items, processor, batchSize = 5) {
+    const results = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+        const batch = items.slice(i, i + batchSize);
+        const batchResults = await Promise.all(batch.map(processor));
+        results.push(...batchResults);
+    }
+    return results;
+}
+
 export async function POST(request) {
     const startTime = Date.now();
     const auditId = crypto.randomUUID();
@@ -44,21 +60,41 @@ export async function POST(request) {
 
         console.log(`[AUDIT:${auditId}] Starting audit submission for ${auditData.siteName}`);
 
-        // Step 1: Create folder structure
-        console.log(`[AUDIT:${auditId}] Creating folder structure...`);
-        const folders = await createAuditFolderStructure(accessToken, {
-            clientName,
-            siteName: auditData.siteName,
-            auditDate: auditData.auditDate || new Date().toISOString(),
-        });
+        // Check if Drive resources were pre-created at audit start
+        const driveResources = auditData.driveResources;
+        let folders;
 
-        // Step 2: Create section photo folders
+        if (driveResources?.auditFolderId) {
+            console.log(`[AUDIT:${auditId}] Using pre-created Drive resources (fast path)`);
+            folders = {
+                auditFolderId: driveResources.auditFolderId,
+                photosFolderId: driveResources.photosFolderId,
+            };
+        } else {
+            // Step 1: Create folder structure (fallback if not pre-created)
+            console.log(`[AUDIT:${auditId}] Creating folder structure (fallback)...`);
+            folders = await createAuditFolderStructure(accessToken, {
+                clientName,
+                siteName: auditData.siteName,
+                auditDate: auditData.auditDate || new Date().toISOString(),
+            });
+        }
+
+        // Step 2: Use pre-created section folders or create new ones as fallback
         const sectionTitles = checklist.sections.map(s => s.section_title || s.sectionTitle);
-        const sectionFolders = await createSectionPhotoFolders(
-            accessToken,
-            folders.photosFolderId,
-            sectionTitles
-        );
+        let sectionFolders;
+
+        if (driveResources?.sectionFolders && Object.keys(driveResources.sectionFolders).length > 0) {
+            sectionFolders = driveResources.sectionFolders;
+            console.log(`[AUDIT:${auditId}] Using pre-created section folders (fast path)`);
+        } else {
+            console.log(`[AUDIT:${auditId}] Creating section folders (fallback)...`);
+            sectionFolders = await createSectionPhotoFolders(
+                accessToken,
+                folders.photosFolderId,
+                sectionTitles
+            );
+        }
 
         // Step 2b: Create table photo folders by detecting table photos from photos array
         // Table photos have itemId like "table_table_1767520826585_header_0"
@@ -171,15 +207,9 @@ export async function POST(request) {
 
                 // Check if photo was already uploaded via background upload
                 if (photo.alreadyUploaded && photo.driveFileId) {
-                    console.log(`[AUDIT:${auditId}] Photo ${photo.filename} already in Drive (${photo.driveFileId}), moving to audit folder...`);
-
-                    // Move the existing file to the correct audit folder
-                    try {
-                        await moveFileToFolder(accessToken, photo.driveFileId, targetFolderId);
-                        console.log(`[AUDIT:${auditId}] Moved ${photo.filename} to audit folder`);
-                    } catch (moveErr) {
-                        console.warn(`[AUDIT:${auditId}] Could not move file, may already be in place:`, moveErr.message);
-                    }
+                    // Photos are now named with section prefix (e.g., "Critical DB_1.jpg")
+                    // No need to move to section folders - saves significant time!
+                    console.log(`[AUDIT:${auditId}] Using already-uploaded photo: ${photo.filename} (${photo.driveFileId})`);
 
                     uploadedPhotos.push({
                         itemId: photo.itemId,

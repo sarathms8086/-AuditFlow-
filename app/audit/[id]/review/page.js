@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { useOffline } from '@/hooks/useOffline';
 import { getAudit, updateAudit, getAuditPhotos } from '@/lib/db';
 import { syncPendingAudits } from '@/lib/sync';
+import { findBackupInFolder, recoverFromBackup } from '@/lib/autoBackup';
 import styles from './page.module.css';
 
 export default function AuditReviewPage() {
@@ -117,17 +118,21 @@ export default function AuditReviewPage() {
                         details: result.audits[0]?.result,
                     });
                 } else if (result.audits && result.audits[0]?.error) {
-                    // Show actual error message
+                    // Show actual error message with recovery option
                     const errorMsg = result.audits[0].error.message || 'Unknown error';
                     setSubmitResult({
                         success: false,
                         message: `Sync failed: ${errorMsg}`,
+                        canRecover: !!audit.driveResources?.auditFolderId,
+                        auditFolderId: audit.driveResources?.auditFolderId,
                     });
                     console.error('[SUBMIT] Sync error:', result.audits[0].error);
                 } else {
                     setSubmitResult({
                         success: false,
                         message: 'Sync failed. Will retry when online.',
+                        canRecover: !!audit.driveResources?.auditFolderId,
+                        auditFolderId: audit.driveResources?.auditFolderId,
                     });
                 }
             } else {
@@ -142,7 +147,58 @@ export default function AuditReviewPage() {
             setSubmitResult({
                 success: false,
                 message: 'Failed to submit: ' + err.message,
+                canRecover: !!audit.driveResources?.auditFolderId,
+                auditFolderId: audit.driveResources?.auditFolderId,
             });
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // Handle recovery from backup
+    const handleRecovery = async () => {
+        if (!submitResult?.auditFolderId) {
+            alert('No backup available for recovery');
+            setSubmitResult(null); // Clear error state
+            return;
+        }
+
+        const folderId = submitResult.auditFolderId;
+        setSubmitResult(null); // Clear error state immediately
+        setSubmitting(true);
+
+        try {
+            // Find backup file in the audit folder
+            const backupFile = await findBackupInFolder(folderId);
+
+            if (!backupFile) {
+                alert('No backup file found. Your data is still saved locally - please try Submit again.');
+                setSubmitting(false);
+                return;
+            }
+
+            // Recover data from backup
+            const backupData = await recoverFromBackup(backupFile.id);
+            console.log('[RECOVER] Backup data retrieved:', backupData);
+
+            // Update local audit with recovered data
+            if (backupData?.data) {
+                await updateAudit(audit.id, {
+                    responses: backupData.data.responses || audit.responses,
+                    sectionFindings: backupData.data.sectionFindings || audit.sectionFindings,
+                    tablePhotos: backupData.data.tablePhotos || audit.tablePhotos,
+                });
+
+                // Reload audit
+                await loadAudit();
+
+                alert('Data recovered successfully! Click Submit to retry.');
+            } else {
+                alert('Backup was empty. Your local data is still available - click Submit to retry.');
+            }
+        } catch (err) {
+            console.error('[RECOVER] Recovery failed:', err);
+            alert('Recovery failed: ' + err.message + '\n\nYour local data is still available - click Submit to retry.');
         } finally {
             setSubmitting(false);
         }
@@ -283,7 +339,22 @@ export default function AuditReviewPage() {
 
                 {submitResult && !submitResult.success && (
                     <div className={styles.errorsCard}>
-                        <p>{submitResult.message}</p>
+                        <p>❌ {submitResult.message}</p>
+                        {submitResult.canRecover && (
+                            <>
+                                <p style={{ fontSize: '0.9em', marginTop: '0.5rem', opacity: 0.8 }}>
+                                    ✅ Your data is backed up and safe! You can recover and retry.
+                                </p>
+                                <Button
+                                    onClick={handleRecovery}
+                                    fullWidth
+                                    style={{ marginTop: '1rem' }}
+                                    loading={submitting}
+                                >
+                                    🔄 Recover & Retry
+                                </Button>
+                            </>
+                        )}
                     </div>
                 )}
             </div>

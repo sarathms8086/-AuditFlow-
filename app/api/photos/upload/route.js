@@ -76,6 +76,7 @@ async function getOrCreatePhotosFolder(drive, parentFolderId, auditId) {
  * POST /api/photos/upload
  * 
  * Upload a single photo to Google Drive
+ * Optionally adds slide to PPT if presentationId is provided
  */
 export async function POST(request) {
     try {
@@ -87,7 +88,16 @@ export async function POST(request) {
         const accessToken = authHeader.split(' ')[1];
 
         // Parse request body
-        const { auditId, itemId, filename, base64, mimeType } = await request.json();
+        const {
+            auditId,
+            itemId,
+            filename,
+            base64,
+            mimeType,
+            targetFolderId,     // Optional: specific folder to upload to
+            presentationId,     // Optional: PPT to add slide to
+            sectionTitle,       // Optional: section name for slide
+        } = await request.json();
 
         if (!auditId || !filename || !base64) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -97,9 +107,17 @@ export async function POST(request) {
         const auth = getGoogleClient(accessToken);
         const drive = google.drive({ version: 'v3', auth });
 
-        // Get or create folders
-        const auditFlowFolderId = await getOrCreateAuditFlowFolder(drive);
-        const photosFolderId = await getOrCreatePhotosFolder(drive, auditFlowFolderId, auditId);
+        // Determine target folder
+        let photosFolderId;
+        if (targetFolderId) {
+            // Use provided folder (real-time sync mode)
+            photosFolderId = targetFolderId;
+            console.log(`[PHOTO] Using target folder: ${targetFolderId}`);
+        } else {
+            // Fallback: create temp folder structure
+            const auditFlowFolderId = await getOrCreateAuditFlowFolder(drive);
+            photosFolderId = await getOrCreatePhotosFolder(drive, auditFlowFolderId, auditId);
+        }
 
         // Convert base64 to buffer
         const buffer = Buffer.from(base64, 'base64');
@@ -128,12 +146,74 @@ export async function POST(request) {
 
         console.log(`[PHOTO] Uploaded ${filename} to Drive: ${file.data.id} (public)`);
 
+        // If presentationId provided, add slide to PPT immediately
+        let slideAdded = false;
+        if (presentationId) {
+            try {
+                const slides = google.slides({ version: 'v1', auth });
+
+                // Create a new slide with the photo
+                const slideId = `slide_${Date.now()}`;
+                const imageUrl = `https://drive.google.com/uc?export=view&id=${file.data.id}`;
+
+                await slides.presentations.batchUpdate({
+                    presentationId,
+                    resource: {
+                        requests: [
+                            {
+                                createSlide: {
+                                    objectId: slideId,
+                                    slideLayoutReference: { predefinedLayout: 'BLANK' },
+                                },
+                            },
+                            {
+                                createImage: {
+                                    objectId: `${slideId}_img`,
+                                    url: imageUrl,
+                                    elementProperties: {
+                                        pageObjectId: slideId,
+                                        size: { width: { magnitude: 500, unit: 'PT' }, height: { magnitude: 350, unit: 'PT' } },
+                                        transform: { scaleX: 1, scaleY: 1, translateX: 110, translateY: 80, unit: 'PT' },
+                                    },
+                                },
+                            },
+                            // Add section title if provided
+                            ...(sectionTitle ? [{
+                                createShape: {
+                                    objectId: `${slideId}_title`,
+                                    shapeType: 'TEXT_BOX',
+                                    elementProperties: {
+                                        pageObjectId: slideId,
+                                        size: { width: { magnitude: 600, unit: 'PT' }, height: { magnitude: 40, unit: 'PT' } },
+                                        transform: { scaleX: 1, scaleY: 1, translateX: 60, translateY: 20, unit: 'PT' },
+                                    },
+                                },
+                            },
+                            {
+                                insertText: {
+                                    objectId: `${slideId}_title`,
+                                    text: sectionTitle,
+                                },
+                            }] : []),
+                        ],
+                    },
+                });
+
+                slideAdded = true;
+                console.log(`[PHOTO] Added slide to PPT: ${presentationId}`);
+            } catch (slideErr) {
+                console.error('[PHOTO] Failed to add slide:', slideErr.message);
+                // Don't fail the whole upload if slide fails
+            }
+        }
+
         return NextResponse.json({
             success: true,
             fileId: file.data.id,
             filename: file.data.name,
             webViewLink: file.data.webViewLink,
             webContentLink: file.data.webContentLink,
+            slideAdded,
         });
 
     } catch (err) {
