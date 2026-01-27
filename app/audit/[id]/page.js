@@ -16,6 +16,8 @@ import { getAudit, updateAudit, savePhoto, getAuditPhotos, blobToBase64, deleteP
 import { queuePhotoUpload } from '@/lib/backgroundUpload';
 import { startAutoBackup, getLastBackupTime } from '@/lib/autoBackup';
 import { UploadBadge } from '@/components/ui/UploadBadge';
+import { BackupStatus } from '@/components/ui/BackupStatus';
+import { RecoveryBanner } from '@/components/ui/RecoveryBanner';
 import styles from './page.module.css';
 
 export default function AuditExecutionPage() {
@@ -30,6 +32,7 @@ export default function AuditExecutionPage() {
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [sectionFindings, setSectionFindings] = useState({}); // { sectionId: [finding1, finding2] }
     const [tablePhotos, setTablePhotos] = useState({}); // { tableHeaderId: [{url, thumbnail}, ...] }
+    const [lastBackupInfo, setLastBackupInfo] = useState(null); // Last backup info { backupFileId, timestamp }
     const stopBackupRef = useRef(null); // Reference to stop auto-backup function
 
     // Load audit data
@@ -85,8 +88,13 @@ export default function AuditExecutionPage() {
             checklistTitle: audit.checklistTitle,
         });
 
+        // Callback when backup completes
+        const handleBackupComplete = (info) => {
+            setLastBackupInfo(info);
+        };
+
         // Start auto-backup (every 2 minutes)
-        stopBackupRef.current = startAutoBackup(audit, getLatestData);
+        stopBackupRef.current = startAutoBackup(audit, getLatestData, handleBackupComplete);
         console.log('[AUDIT] Auto-backup started');
 
         // Cleanup on unmount
@@ -397,7 +405,27 @@ export default function AuditExecutionPage() {
                 </div>
                 {saving && <span className={styles.savingIndicator}>Saving...</span>}
                 {audit && <UploadBadge auditId={audit.id} />}
+                <BackupStatus lastBackupInfo={lastBackupInfo} />
             </header>
+
+            {/* Recovery Banner */}
+            {audit && (
+                <RecoveryBanner
+                    audit={audit}
+                    onRecover={async (data) => {
+                        // Merge recovered data with local audit
+                        const updated = await updateAudit(audit.id, {
+                            responses: data.data?.responses || audit.responses,
+                            sectionFindings: data.data?.sectionFindings || sectionFindings,
+                            tablePhotos: data.data?.tablePhotos || tablePhotos,
+                        });
+                        setAudit(updated);
+                        if (data.data?.sectionFindings) setSectionFindings(data.data.sectionFindings);
+                        if (data.data?.tablePhotos) setTablePhotos(data.data.tablePhotos);
+                        console.log('[AUDIT] Recovered from backup');
+                    }}
+                />
+            )}
 
             {/* Offline Banner */}
             {!online && (

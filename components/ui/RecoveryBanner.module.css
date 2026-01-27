@@ -1,0 +1,99 @@
+.banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-bottom: 1px solid #f59e0b;
+    flex-wrap: wrap;
+}
+
+.content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    flex: 1;
+    min-width: 200px;
+}
+
+.icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.message strong {
+    color: #92400e;
+    font-size: 0.9rem;
+}
+
+.message span {
+    color: #78350f;
+    font-size: 0.8rem;
+    line-height: 1.4;
+}
+
+.error {
+    color: #dc2626 !important;
+    font-weight: 500;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.dismissBtn,
+.recoverBtn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.dismissBtn {
+    background: transparent;
+    color: #92400e;
+    border: 1px solid #d97706;
+}
+
+.dismissBtn:hover {
+    background: rgba(217, 119, 6, 0.1);
+}
+
+.recoverBtn {
+    background: #f59e0b;
+    color: white;
+}
+
+.recoverBtn:hover {
+    background: #d97706;
+}
+
+.dismissBtn:disabled,
+.recoverBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+    .banner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .actions {
+        justify-content: flex-end;
+    }
+}
