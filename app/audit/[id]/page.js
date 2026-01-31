@@ -12,12 +12,13 @@ import { useRouter, useParams } from 'next/navigation';
 import { Section } from '@/components/checklist/Section';
 import { Button } from '@/components/ui/Button';
 import { useOffline } from '@/hooks/useOffline';
-import { getAudit, updateAudit, savePhoto, getAuditPhotos, blobToBase64, deletePhoto } from '@/lib/db';
+import { getAudit, updateAudit, savePhoto, getAuditPhotos, deletePhoto } from '@/lib/db';
 import { queuePhotoUpload } from '@/lib/backgroundUpload';
 import { startAutoBackup, getLastBackupTime } from '@/lib/autoBackup';
 import { UploadBadge } from '@/components/ui/UploadBadge';
 import { BackupStatus } from '@/components/ui/BackupStatus';
 import { RecoveryBanner } from '@/components/ui/RecoveryBanner';
+import { MobileDebugPanel } from '@/components/ui/MobileDebugPanel';
 import styles from './page.module.css';
 
 export default function AuditExecutionPage() {
@@ -152,18 +153,16 @@ export default function AuditExecutionPage() {
         if (!audit) return;
 
         try {
-            // Save to IndexedDB first (instant)
+            // Save to IndexedDB first (instant) - full quality preserved
             const saved = await savePhoto(audit.id, itemId, photo.blob, photo.filename);
             setPhotos((prev) => [...prev, saved]);
 
-            // Convert to base64 for upload
-            const base64 = await blobToBase64(photo.blob);
-
             // Queue for background upload (if online)
+            // Now using DIRECT upload to Drive - no size limit, full quality!
             if (navigator.onLine) {
                 queuePhotoUpload({
                     ...saved,
-                    base64,
+                    blob: photo.blob, // Pass blob directly for full-quality upload
                 }, audit.id, audit.driveResources).catch(err => {
                     console.warn('Background upload queued, will retry:', err.message);
                 });
@@ -220,11 +219,11 @@ export default function AuditExecutionPage() {
             await updateAudit(audit.id, { tablePhotos: newTablePhotos });
 
             // Queue for background upload to Google Drive
+            // Now using DIRECT upload - no size limit, full quality!
             if (navigator.onLine) {
-                const base64 = await blobToBase64(blob);
                 queuePhotoUpload({
                     ...saved,
-                    base64,
+                    blob, // Pass blob directly for full-quality upload
                 }, audit.id, audit.driveResources).catch(err => {
                     console.warn('Background upload queued, will retry:', err.message);
                 });
@@ -520,6 +519,9 @@ export default function AuditExecutionPage() {
                     )}
                 </div>
             </footer>
+
+            {/* Mobile Debug Panel - temporary for debugging */}
+            <MobileDebugPanel />
         </main>
     );
 }
