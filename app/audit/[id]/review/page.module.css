@@ -232,3 +232,26 @@
 .link:hover {
     background: #f8fafc;
 }
+
+/* Failed Photos Section */
+.failedPhotosSection {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fef3c7;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+}
+
+.failedWarning {
+    margin: 0;
+    color: #92400e;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.failedNote {
+    margin: 8px 0 0;
+    color: #78716c;
+    font-size: 12px;
+    font-style: italic;
+}

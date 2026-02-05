@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { getAllChecklists, createChecklist, deleteChecklist, initializeDefaultChecklists, syncLocalToCloud } from '@/lib/checklistDB';
+import { getAllChecklists, createChecklist, deleteChecklist, duplicateChecklist, initializeDefaultChecklists, syncLocalToCloud } from '@/lib/checklistDB';
 import styles from './page.module.css';
 
 // Owner email - only this email can access admin
@@ -90,6 +90,18 @@ export default function AdminPage() {
         }
     };
 
+    const handleDuplicate = async (id, title) => {
+        const newTitle = prompt('Enter name for the duplicated checklist:', `Copy of ${title}`);
+        if (!newTitle) return;
+
+        try {
+            const duplicated = await duplicateChecklist(id, newTitle);
+            router.push(`/admin/checklist/${duplicated.id}`);
+        } catch (e) {
+            alert('Failed to duplicate checklist: ' + e.message);
+        }
+    };
+
     const handleSyncToCloud = async () => {
         setSyncing(true);
         try {
@@ -165,6 +177,9 @@ export default function AdminPage() {
                                         </span>
                                     </div>
                                     <div className={styles.listActions}>
+                                        <button onClick={() => handleDuplicate(checklist.id, checklist.title)} className={styles.editBtn} title="Duplicate Checklist">
+                                            📋
+                                        </button>
                                         <button onClick={() => handleEdit(checklist.id)} className={styles.editBtn}>
                                             ✏️ Edit
                                         </button>

@@ -11,7 +11,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { getChecklist, updateChecklist } from '@/lib/checklistDB';
+import { getChecklist, updateChecklist, duplicateSection } from '@/lib/checklistDB';
 import styles from './page.module.css';
 
 const OWNER_EMAIL = 'sarathsharann@gmail.com';
@@ -132,6 +132,18 @@ export default function ChecklistEditorPage() {
         const sections = checklist.sections.filter((_, i) => i !== currentSectionIndex);
         setChecklist({ ...checklist, sections });
         setCurrentSectionIndex(Math.max(0, currentSectionIndex - 1));
+    };
+
+    const handleDuplicateSection = () => {
+        const currentSection = checklist.sections[currentSectionIndex];
+        const newTitle = prompt('Enter name for the duplicated section:', `Copy of ${currentSection.section_title}`);
+        if (!newTitle) return;
+
+        const duplicated = duplicateSection(currentSection, newTitle);
+        const sections = [...checklist.sections];
+        sections.splice(currentSectionIndex + 1, 0, duplicated);
+        setChecklist({ ...checklist, sections });
+        setCurrentSectionIndex(currentSectionIndex + 1);
     };
 
     // Table operations
@@ -290,6 +302,9 @@ export default function ChecklistEditorPage() {
                                 className={styles.sectionTitle}
                                 placeholder="Section Title"
                             />
+                            <button onClick={handleDuplicateSection} className={styles.duplicateBtn} title="Duplicate Section">
+                                📋 Duplicate
+                            </button>
                             <button onClick={deleteSection} className={styles.deleteBtn}>
                                 🗑️ Delete Section
                             </button>

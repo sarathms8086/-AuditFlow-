@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button';
 import { useOffline } from '@/hooks/useOffline';
 import { getAudit, updateAudit, getAuditPhotos } from '@/lib/db';
 import { syncPendingAudits } from '@/lib/sync';
+import { retryFailedUploads, getUploadStatus, PHOTO_STATUS } from '@/lib/backgroundUpload';
 import { findBackupInFolder, recoverFromBackup } from '@/lib/autoBackup';
 import styles from './page.module.css';
 
@@ -22,6 +23,8 @@ export default function AuditReviewPage() {
 
     const [audit, setAudit] = useState(null);
     const [photos, setPhotos] = useState([]);
+    const [failedPhotos, setFailedPhotos] = useState([]);
+    const [retryingUploads, setRetryingUploads] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [validationErrors, setValidationErrors] = useState([]);
@@ -44,12 +47,34 @@ export default function AuditReviewPage() {
             const photoData = await getAuditPhotos(params.id);
             setPhotos(photoData);
 
+            // Track failed photos
+            const failed = photoData.filter(p => p.status === 'failed');
+            setFailedPhotos(failed);
+
             // Validate
             validateAudit(auditData, photoData);
         } catch (err) {
             console.error('Failed to load audit:', err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Retry failed photo uploads
+    const handleRetryUploads = async () => {
+        setRetryingUploads(true);
+        try {
+            const retried = await retryFailedUploads(params.id);
+            console.log(`[REVIEW] Retried ${retried} failed uploads`);
+
+            // Wait a bit for uploads to process, then reload
+            setTimeout(async () => {
+                await loadAudit();
+                setRetryingUploads(false);
+            }, 3000);
+        } catch (err) {
+            console.error('Retry failed:', err);
+            setRetryingUploads(false);
         }
     };
 
@@ -97,9 +122,27 @@ export default function AuditReviewPage() {
     };
 
     const handleSubmit = async () => {
+        // Validate but allow override
         if (!validateAudit(audit, photos)) {
-            alert('Please fix validation errors before submitting');
-            return;
+            // Check if errors are only related to failed photos or non-critical items
+            const criticalErrors = validationErrors.filter(e => e.type === 'missing');
+
+            if (criticalErrors.length > 0) {
+                alert('Please answer all required questions before submitting.');
+                return;
+            }
+
+            // Warnings only (like missing photos)
+            if (!confirm('There are some missing photos or remarks. Do you want to submit anyway?')) {
+                return;
+            }
+        }
+
+        // Confirm if there are failed uploads
+        if (failedPhotos.length > 0) {
+            if (!confirm(`Warning: ${failedPhotos.length} photo(s) failed to upload and will be skipped. Continue?`)) {
+                return;
+            }
         }
 
         setSubmitting(true);
@@ -318,6 +361,24 @@ export default function AuditReviewPage() {
                 {/* Photos */}
                 <div className={styles.infoCard}>
                     <h3>📷 Photos Captured: {photos.length}</h3>
+                    {failedPhotos.length > 0 && (
+                        <div className={styles.failedPhotosSection}>
+                            <p className={styles.failedWarning}>
+                                ⚠️ {failedPhotos.length} photo(s) failed to upload
+                            </p>
+                            <Button
+                                onClick={handleRetryUploads}
+                                loading={retryingUploads}
+                                variant="secondary"
+                                style={{ marginTop: '0.5rem' }}
+                            >
+                                🔄 Retry Failed Uploads
+                            </Button>
+                            <p className={styles.failedNote}>
+                                You can still submit - report will be generated with available photos.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Validation Errors */}

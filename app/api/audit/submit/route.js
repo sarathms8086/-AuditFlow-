@@ -41,10 +41,17 @@ export async function POST(request) {
         const accessToken = authHeader.split(' ')[1];
 
         // Parse request body
-        const { auditData, checklist, photos = [], responses: req_responses = {} } = await request.json();
+        const { auditData, checklist, photos: rawPhotos = [], responses: req_responses = {} } = await request.json();
+
+        // DEFENSIVE: Filter out null or invalid photos (safety net for sync failures)
+        const photos = (rawPhotos || []).filter(p => p !== null && p !== undefined && p.itemId);
+        const skippedCount = (rawPhotos || []).length - photos.length;
+        if (skippedCount > 0) {
+            console.warn(`[SUBMIT] Filtered out ${skippedCount} invalid/null photos from ${rawPhotos.length} total`);
+        }
 
         // EARLY DEBUG: Log photos array immediately
-        console.log(`[SUBMIT] Received ${photos.length} photos, itemIds:`, photos.map(p => p.itemId));
+        console.log(`[SUBMIT] Processing ${photos.length} valid photos, itemIds:`, photos.map(p => p.itemId));
         const tablePhotoCount = photos.filter(p => p.itemId?.startsWith('table_')).length;
         console.log(`[SUBMIT] Table photos detected: ${tablePhotoCount}`);
 

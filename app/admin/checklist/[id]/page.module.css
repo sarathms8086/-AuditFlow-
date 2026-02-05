@@ -179,6 +179,21 @@
     border-bottom: 2px solid #1a365d;
 }
 
+.duplicateBtn {
+    background: #dbeafe;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #1d4ed8;
+    transition: all 0.2s;
+}
+
+.duplicateBtn:hover {
+    background: #bfdbfe;
+}
+
 .deleteBtn {
     background: #fee2e2;
     border: none;
