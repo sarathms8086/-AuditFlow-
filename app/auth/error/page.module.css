@@ -1,0 +1,38 @@
+.main {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fef2f2;
+    padding: 24px;
+}
+
+.content {
+    text-align: center;
+    max-width: 400px;
+}
+
+.errorIcon {
+    width: 64px;
+    height: 64px;
+    background: #ef4444;
+    color: white;
+    font-size: 32px;
+    font-weight: bold;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+}
+
+.content h1 {
+    color: #dc2626;
+    font-size: 24px;
+    margin: 0 0 8px;
+}
+
+.content p {
+    color: #64748b;
+    margin: 0 0 24px;
+}

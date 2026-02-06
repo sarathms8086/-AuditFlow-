@@ -1,0 +1,393 @@
+.section {
+    background: #f8fafc;
+    border-radius: 16px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a365d 0%, #2d4a7c 100%);
+    color: white;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 16px;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+}
+
+.chevron {
+    font-size: 12px;
+    transition: transform 0.2s ease;
+}
+
+.chevron.expanded {
+    transform: rotate(0deg);
+}
+
+.title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.progress {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.progressText {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.progressBar {
+    width: 60px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: #22c55e;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.content {
+    padding: 16px;
+}
+
+/* Subsection Styles */
+.subsection {
+    margin-bottom: 20px;
+}
+
+.subsectionTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f59e0b;
+    margin: 0 0 12px;
+    padding: 8px 12px;
+    background: #fffbeb;
+    border-left: 3px solid #f59e0b;
+    border-radius: 0 8px 8px 0;
+}
+
+.items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Table Styles */
+.tableContainer {
+    margin-top: 20px;
+    background: #f0fdf4;
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 3px solid #22c55e;
+}
+
+.tableTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #166534;
+    margin: 0 0 12px;
+}
+
+.readingsTable {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 13px;
+}
+
+.readingsTable th {
+    background: #1a365d;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.readingsTable td {
+    padding: 8px 14px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.readingsTable .headerRow td {
+    background: #f1f5f9;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.readingsTable .spacerRow td {
+    background: #f8fafc;
+    height: 8px;
+    padding: 4px;
+}
+
+.tableInput {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+.tableInput:focus {
+    outline: none;
+    border-color: #22c55e;
+}
+
+/* Additional Findings Section */
+.findingsSection {
+    margin-top: 24px;
+    padding: 16px;
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-radius: 12px;
+    border-left: 4px solid #f59e0b;
+}
+
+.findingsTitle {
+    font-size: 15px;
+    font-weight: 600;
+    color: #92400e;
+    margin: 0 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.findingsList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.findingItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    background: white;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #fcd34d;
+}
+
+.findingNumber {
+    font-weight: 700;
+    color: #92400e;
+    min-width: 24px;
+}
+
+.findingDeleteBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #ef4444;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingDeleteBtn:hover {
+    background: #dc2626;
+}
+
+.findingText {
+    flex: 1;
+    font-size: 14px;
+    color: #1e293b;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.findingText:hover {
+    text-decoration: underline;
+    color: #f59e0b;
+}
+
+.findingEditInput {
+    flex: 1;
+    padding: 6px 10px;
+    border: 2px solid #f59e0b;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.findingEditBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #3b82f6;
+    color: white;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingEditBtn:hover {
+    background: #2563eb;
+}
+
+.findingSaveBtn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: none;
+    background: #22c55e;
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.findingSaveBtn:hover {
+    background: #16a34a;
+}
+
+.findingsInput {
+    display: flex;
+    gap: 8px;
+}
+
+.findingTextInput {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid #fcd34d;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+}
+
+.findingTextInput:focus {
+    outline: none;
+    border-color: #f59e0b;
+}
+
+.addFindingBtn {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.addFindingBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.addFindingBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+/* Table Header Photo Styles */
+.tableHeaderContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 12px;
+}
+
+.tableHeaderLabel {
+    font-weight: 600;
+    color: #2d5a73;
+}
+
+.tableHeaderPhotos {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tablePhotoThumb {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 2px solid #0099a0;
+}
+
+.tablePhotoThumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tablePhotoDelete {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.tablePhotoBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #0099a0 0%, #007a80 100%);
+    color: white;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+}
+
+.tablePhotoBtn:hover {
+    background: linear-gradient(135deg, #007a80 0%, #005c60 100%);
+}

@@ -1,0 +1,81 @@
+.main {
+    min-height: 100vh;
+    background: #f8fafc;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: white;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.backBtn {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: #64748b;
+    cursor: pointer;
+    padding: 8px;
+}
+
+.backBtn:hover {
+    color: #1a365d;
+}
+
+.title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a365d;
+    margin: 0;
+}
+
+.form {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.field label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+}
+
+.field input,
+.field select {
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: #1a365d;
+}
+
+.field input::placeholder {
+    color: #94a3b8;
+}
+
+.field select {
+    background: white;
+    cursor: pointer;
+}
